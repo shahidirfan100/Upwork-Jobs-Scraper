@@ -1,0 +1,10 @@
+{
+  "keyword": "apify",
+  "results_wanted": 20,
+  "max_pages": 5,
+  "collectDetails": true,
+  "proxyConfiguration": {
+    "useApifyProxy": true,
+    "apifyProxyGroups": ["RESIDENTIAL"]
+  }
+}

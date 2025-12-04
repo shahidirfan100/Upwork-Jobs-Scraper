@@ -1,0 +1,14 @@
+{
+  "name": "upwork-jobs-scraper",
+  "version": "1.0.0",
+  "description": "Extract freelance job listings from Upwork with comprehensive details including budgets, skills, client information, and more.",
+  "type": "module",
+  "scripts": {
+    "start": "node src/main.js"
+  },
+  "dependencies": {
+    "apify": "^3.4.5",
+    "crawlee": "^3.14.1",
+    "playwright": "^1.48.0"
+  }
+}

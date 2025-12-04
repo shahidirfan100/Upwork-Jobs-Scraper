@@ -1,0 +1,63 @@
+{
+  "actorSpecification": 1,
+  "fields": {},
+  "views": {
+    "overview": {
+      "title": "Overview",
+      "transformation": {
+        "fields": [
+          "title",
+          "company",
+          "location",
+          "budget",
+          "hourly_rate",
+          "job_type",
+          "experience_level",
+          "date_posted",
+          "url"
+        ]
+      },
+      "display": {
+        "component": "table",
+        "properties": {
+          "title": {
+            "label": "Job Title",
+            "format": "text"
+          },
+          "company": {
+            "label": "Client",
+            "format": "text"
+          },
+          "location": {
+            "label": "Location",
+            "format": "text"
+          },
+          "budget": {
+            "label": "Budget",
+            "format": "text"
+          },
+          "hourly_rate": {
+            "label": "Hourly Rate",
+            "format": "text"
+          },
+          "job_type": {
+            "label": "Job Type",
+            "format": "text"
+          },
+          "experience_level": {
+            "label": "Experience",
+            "format": "text"
+          },
+          "date_posted": {
+            "label": "Posted",
+            "format": "text"
+          },
+          "url": {
+            "label": "URL",
+            "format": "link"
+          }
+        }
+      }
+    }
+  }
+}
