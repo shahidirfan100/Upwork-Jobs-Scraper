@@ -1,11 +1,7 @@
 {
-  "keyword": "apify",
-  "results_wanted": 20,
-  "max_pages": 5,
-  "collectDetails": true,
+  "searchUrl": "https://www.upwork.com/freelance-jobs/web-scraping/",
+  "maxJobs": 20,
   "proxyConfiguration": {
-    "useApifyProxy": true,
-    "apifyProxyGroups": ["RESIDENTIAL"],
-    "apifyProxyCountry": "US"
+    "useApifyProxy": true
   }
 }

@@ -1,14 +1,18 @@
 {
-  "name": "upwork-jobs-scraper",
-  "version": "1.0.0",
-  "description": "Extract freelance job listings from Upwork with comprehensive details including budgets, skills, client information, and more.",
-  "type": "module",
-  "dependencies": {
-        "apify": "^3.4.2",
-        "crawlee": "^3.13.8",
-        "playwright": "1.54.1",
+    "name": "upwork-jobs-scraper",
+    "version": "1.0.0",
+    "type": "module",
+    "description": "Extract freelance job listings from Upwork with advanced filtering options. Get structured job data including titles, descriptions, budgets, skills, experience levels, and client information.",
+    "engines": {
+        "node": ">=20.0.0"
+    },
+    "dependencies": {
+        "apify": "^3.5.2",
+        "camoufox-js": "^0.7.0",
+        "crawlee": "^3.15.3",
         "cheerio": "^1.0.0-rc.12",
-        "got-scraping": "^3.2.14"
+        "got-scraping": "^4.1.2",
+        "playwright": "1.56.1"
     },
     "devDependencies": {
         "@apify/eslint-config": "^1.0.0",
@@ -23,8 +27,20 @@
         "lint": "eslint",
         "lint:fix": "eslint --fix",
         "test": "echo \"Error: oops, the Actor has no tests yet, sad!\" && exit 1",
-        "postinstall": "npx crawlee install-playwright-browsers"
+        "postinstall": "npx camoufox-js fetch"
     },
-    "author": "It's not you it's me",
-    "license": "ISC"
+    "author": "Shahid Irfan",
+    "license": "Apache-2.0",
+    "keywords": [
+        "apify",
+        "scraper",
+        "upwork",
+        "freelance",
+        "jobs",
+        "gig-economy",
+        "contractor",
+        "remote-work",
+        "job-listings",
+        "freelancer"
+    ]
 }

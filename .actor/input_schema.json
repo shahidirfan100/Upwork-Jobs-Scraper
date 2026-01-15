@@ -1,100 +1,35 @@
 {
-  "title": "Upwork Jobs Scraper",
-  "description": "Extract freelance job postings from Upwork. Search by keyword, filter by job type and experience level, and get comprehensive job details including budgets, skills, and client information.",
-  "type": "object",
-  "schemaVersion": 1,
-  "properties": {
-    "startUrl": {
-      "title": "Start URL",
-      "type": "string",
-      "description": "Start scraping from a specific Upwork search URL. If provided, this overrides keyword and other filters.",
-      "editor": "textfield",
-      "example": "https://www.upwork.com/nx/search/jobs/?q=web%20developer"
+    "title": "Upwork Jobs Scraper Input",
+    "type": "object",
+    "schemaVersion": 1,
+    "properties": {
+        "searchUrl": {
+            "title": "Search URL",
+            "type": "string",
+            "description": "Direct Upwork job search URL to scrape. Example: https://www.upwork.com/freelance-jobs/web-scraping/",
+            "editor": "textfield",
+            "prefill": "https://www.upwork.com/freelance-jobs/web-scraping/",
+            "default": "https://www.upwork.com/freelance-jobs/web-scraping/"
+        },
+        "maxJobs": {
+            "title": "Maximum Jobs",
+            "type": "integer",
+            "description": "Maximum number of job listings to scrape (0 = unlimited). Default is 20 for optimal performance.",
+            "default": 20,
+            "minimum": 0,
+            "maximum": 10000
+        },
+        "proxyConfiguration": {
+            "title": "Proxy Configuration",
+            "type": "object",
+            "description": "Proxy settings for bypassing anti-bot protection. Recommended for reliable scraping.",
+            "editor": "proxy",
+            "default": {
+                "useApifyProxy": true
+            }
+        }
     },
-    "keyword": {
-      "title": "Search Keyword",
-      "type": "string",
-      "description": "Search term for jobs. Examples: 'web scraping', 'data entry', 'graphic design', 'python developer'",
-      "editor": "textfield",
-      "prefill": "apify",
-      "example": "web scraping"
-    },
-    "location": {
-      "title": "Location",
-      "type": "string",
-      "description": "Filter jobs by client location (optional).",
-      "editor": "textfield",
-      "example": "United States"
-    },
-    "jobType": {
-      "title": "Job Type",
-      "type": "string",
-      "description": "Filter by contract type: hourly or fixed-price.",
-      "editor": "select",
-      "enum": ["", "hourly", "fixed"],
-      "enumTitles": ["All Types", "Hourly", "Fixed Price"]
-    },
-    "experienceLevel": {
-      "title": "Experience Level",
-      "type": "string",
-      "description": "Filter by required experience level.",
-      "editor": "select",
-      "enum": ["", "entry", "intermediate", "expert"],
-      "enumTitles": ["All Levels", "Entry Level", "Intermediate", "Expert"]
-    },
-    "hourlyRateMin": {
-      "title": "Minimum Hourly Rate",
-      "type": "integer",
-      "description": "Minimum hourly rate in USD (for hourly jobs only).",
-      "editor": "number",
-      "minimum": 0,
-      "example": 20
-    },
-    "hourlyRateMax": {
-      "title": "Maximum Hourly Rate",
-      "type": "integer",
-      "description": "Maximum hourly rate in USD (for hourly jobs only).",
-      "editor": "number",
-      "minimum": 0,
-      "example": 100
-    },
-    "collectDetails": {
-      "title": "Collect Full Details",
-      "type": "boolean",
-      "description": "Extract comprehensive job details including descriptions, client info, and requirements.",
-      "editor": "checkbox",
-      "default": true
-    },
-    "results_wanted": {
-      "title": "Maximum Results",
-      "type": "integer",
-      "description": "Maximum number of jobs to scrape. Set to 0 for unlimited.",
-      "minimum": 1,
-      "default": 100,
-      "editor": "number",
-      "example": 50
-    },
-    "max_pages": {
-      "title": "Maximum Pages",
-      "type": "integer",
-      "description": "Maximum number of search result pages to process.",
-      "minimum": 1,
-      "maximum": 50,
-      "editor": "number",
-      "default": 20,
-      "example": 10
-    },
-    "proxyConfiguration": {
-      "title": "Proxy Configuration",
-      "type": "object",
-      "description": "Proxy settings for requests. Residential proxies recommended for best results.",
-      "editor": "proxy",
-      "default": {
-        "useApifyProxy": true,
-        "apifyProxyGroups": ["RESIDENTIAL"]
-      }
-    }
-  },
-  "required": [],
-  "additionalProperties": false
+    "required": [
+        "searchUrl"
+    ]
 }

@@ -1,63 +1,69 @@
 {
-  "actorSpecification": 1,
-  "fields": {},
-  "views": {
-    "overview": {
-      "title": "Overview",
-      "transformation": {
-        "fields": [
-          "title",
-          "company",
-          "location",
-          "budget",
-          "hourly_rate",
-          "job_type",
-          "experience_level",
-          "date_posted",
-          "url"
-        ]
-      },
-      "display": {
-        "component": "table",
-        "properties": {
-          "title": {
-            "label": "Job Title",
-            "format": "text"
-          },
-          "company": {
-            "label": "Client",
-            "format": "text"
-          },
-          "location": {
-            "label": "Location",
-            "format": "text"
-          },
-          "budget": {
-            "label": "Budget",
-            "format": "text"
-          },
-          "hourly_rate": {
-            "label": "Hourly Rate",
-            "format": "text"
-          },
-          "job_type": {
-            "label": "Job Type",
-            "format": "text"
-          },
-          "experience_level": {
-            "label": "Experience",
-            "format": "text"
-          },
-          "date_posted": {
-            "label": "Posted",
-            "format": "text"
-          },
-          "url": {
-            "label": "URL",
-            "format": "link"
-          }
+    "actorSpecification": 1,
+    "fields": {},
+    "views": {
+        "overview": {
+            "title": "Job Listings Overview",
+            "description": "Complete view of all scraped Upwork job listings",
+            "transformation": {
+                "fields": [
+                    "title",
+                    "description",
+                    "budget",
+                    "experienceLevel",
+                    "contractType",
+                    "projectLength",
+                    "skills",
+                    "postedDate",
+                    "clientInfo",
+                    "url"
+                ]
+            },
+            "display": {
+                "component": "table",
+                "properties": {
+                    "title": {
+                        "label": "Title",
+                        "format": "text"
+                    },
+                    "description": {
+                        "label": "Description",
+                        "format": "text"
+                    },
+                    "budget": {
+                        "label": "Budget",
+                        "format": "text"
+                    },
+                    "experienceLevel": {
+                        "label": "Experience Level",
+                        "format": "text"
+                    },
+                    "contractType": {
+                        "label": "Contract Type",
+                        "format": "text"
+                    },
+                    "projectLength": {
+                        "label": "Project Length",
+                        "format": "text"
+                    },
+                    "skills": {
+                        "label": "Skills",
+                        "format": "text"
+                    },
+                    "postedDate": {
+                        "label": "Posted Date",
+                        "format": "text"
+                    },
+                    "clientInfo": {
+                        "label": "Client Info",
+                        "format": "text"
+                    },
+                    "url": {
+                        "label": "Job URL",
+                        "format": "link"
+                    }
+                }
+            }
         }
-      }
     }
-  }
 }
