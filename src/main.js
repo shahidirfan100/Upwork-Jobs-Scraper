@@ -478,7 +478,6 @@ function extractUpworkJobFromElement($, $el) {
  */
 async function humanizeInteractions(page) {
     try {
-        // Random mouse movements
         const viewport = page.viewportSize();
         if (viewport) {
             const x = Math.floor(Math.random() * viewport.width * 0.8) + viewport.width * 0.1;
@@ -486,7 +485,6 @@ async function humanizeInteractions(page) {
             await page.mouse.move(x, y, { steps: 10 });
         }
 
-        // Random scroll
         await page.evaluate(() => {
             const scrollAmount = Math.floor(Math.random() * 300) + 100;
             window.scrollBy({ top: scrollAmount, behavior: 'smooth' });
@@ -494,7 +492,6 @@ async function humanizeInteractions(page) {
 
         await page.waitForTimeout(randomDelay(500, 1500));
 
-        // Scroll back up a bit
         await page.evaluate(() => {
             const scrollAmount = Math.floor(Math.random() * 150) + 50;
             window.scrollBy({ top: -scrollAmount, behavior: 'smooth' });
@@ -569,11 +566,12 @@ try {
     const proxyUrl = await proxyConfiguration.newUrl();
     log.info(`Using proxy: ${proxyUrl ? 'Yes (Residential)' : 'No'}`);
 
-    // Create Playwright crawler with ENHANCED Camoufox for Cloudflare bypass
+    // Create Playwright crawler with Camoufox for Cloudflare bypass
+    // Following Apify's recommended template structure
     const crawler = new PlaywrightCrawler({
         proxyConfiguration,
         maxRequestsPerCrawl: 15,
-        maxConcurrency: 1, // Single concurrency for stealth
+        maxConcurrency: 1,
         navigationTimeoutSecs: 90,
         requestHandlerTimeoutSecs: 300,
         maxRequestRetries: 5,
@@ -581,8 +579,8 @@ try {
         launchContext: {
             launcher: firefox,
             launchOptions: await camoufoxLaunchOptions({
-                // Use 'virtual' headless for better stealth on Linux
-                headless: 'virtual',
+                // Headless mode
+                headless: true,
 
                 // Proxy configuration
                 proxy: proxyUrl,
@@ -590,104 +588,23 @@ try {
                 // GeoIP spoofing - auto-set timezone/locale based on proxy IP
                 geoip: true,
 
-                // OS fingerprint - randomize between common OS
-                os: ['windows', 'macos'][Math.floor(Math.random() * 2)],
+                // OS fingerprint
+                os: 'windows',
 
                 // Locale settings
                 locale: 'en-US',
 
-                // Enable humanize mode for realistic cursor movements
-                humanize: 2.5,
-
                 // Block WebRTC to prevent IP leaks
                 block_webrtc: true,
 
-                // Block images for faster loading (can enable if needed)
-                block_images: false,
-
-                // Enable browser cache for more realistic behavior
-                enable_cache: true,
-
-                // Screen constraints - use more common resolutions
+                // Screen constraints
                 screen: {
                     minWidth: 1280,
                     maxWidth: 1920,
                     minHeight: 800,
                     maxHeight: 1080,
                 },
-
-                // Firefox preferences for enhanced stealth
-                firefoxPrefs: {
-                    // Disable telemetry
-                    'toolkit.telemetry.enabled': false,
-                    'datareporting.healthreport.uploadEnabled': false,
-
-                    // Disable WebRTC
-                    'media.peerconnection.enabled': false,
-                    'media.peerconnection.ice.default_address_only': true,
-
-                    // Privacy settings
-                    'privacy.trackingprotection.enabled': true,
-                    'privacy.resistFingerprinting': false, // Camoufox handles this
-                    'network.cookie.cookieBehavior': 4,
-
-                    // Disable beacons
-                    'beacon.enabled': false,
-
-                    // Performance
-                    'network.http.pipelining': true,
-                    'network.http.max-connections': 48,
-
-                    // JavaScript timing obfuscation
-                    'dom.event.highrestimestamp.enabled': true,
-
-                    // Disable safe browsing lookups
-                    'browser.safebrowsing.malware.enabled': false,
-                    'browser.safebrowsing.phishing.enabled': false,
-                },
             }),
-        },
-
-        // Pre-navigation hook
-        async preNavigationHooks({ page }) {
-            // Set extra headers that look natural
-            await page.setExtraHTTPHeaders({
-                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
-                'Accept-Language': 'en-US,en;q=0.9',
-                'Accept-Encoding': 'gzip, deflate, br',
-                'Cache-Control': 'max-age=0',
-                'Sec-Ch-Ua': '"Not A(Brand";v="99", "Google Chrome";v="121", "Chromium";v="121"',
-                'Sec-Ch-Ua-Mobile': '?0',
-                'Sec-Ch-Ua-Platform': '"Windows"',
-                'Sec-Fetch-Dest': 'document',
-                'Sec-Fetch-Mode': 'navigate',
-                'Sec-Fetch-Site': 'none',
-                'Sec-Fetch-User': '?1',
-                'Upgrade-Insecure-Requests': '1',
-            });
-
-            // Block unnecessary resources for faster loading
-            await page.route('**/*', (route) => {
-                const resourceType = route.request().resourceType();
-                const url = route.request().url();
-
-                // Block analytics, tracking, and heavy resources
-                if (
-                    resourceType === 'media' ||
-                    resourceType === 'font' ||
-                    url.includes('analytics') ||
-                    url.includes('tracking') ||
-                    url.includes('hotjar') ||
-                    url.includes('facebook') ||
-                    url.includes('google-analytics') ||
-                    url.includes('googletagmanager') ||
-                    url.includes('doubleclick')
-                ) {
-                    return route.abort();
-                }
-
-                return route.continue();
-            });
         },
 
         async requestHandler({ page, request }) {
@@ -698,11 +615,8 @@ try {
                 // Add random delay before navigation for stealth
                 await page.waitForTimeout(randomDelay(2000, 4000));
 
-                // Navigate to page with longer timeout
-                await page.goto(request.url, {
-                    waitUntil: 'domcontentloaded',
-                    timeout: 90000
-                });
+                // Wait for page to load
+                await page.waitForLoadState('domcontentloaded');
 
                 // Wait for network to settle
                 await page.waitForLoadState('networkidle', { timeout: 30000 }).catch(() => { });
@@ -891,7 +805,7 @@ try {
         }
     });
 
-    log.info('Starting crawler with Enhanced Camoufox for Cloudflare bypass...');
+    log.info('Starting crawler with Camoufox for Cloudflare bypass...');
     await crawler.run([searchUrl]);
 
     const endTime = Date.now();
