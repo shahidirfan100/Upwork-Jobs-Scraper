@@ -16,6 +16,13 @@ function stripHtml(html) {
 }
 
 /**
+ * Random delay for human-like behavior
+ */
+function randomDelay(min = 1000, max = 3000) {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+/**
  * Extract jobs from JSON-LD structured data
  */
 async function extractJobsViaJsonLD(page) {
@@ -32,28 +39,21 @@ async function extractJobsViaJsonLD(page) {
             try {
                 const data = JSON.parse(scriptContent);
 
-                // Handle array of job postings
                 if (Array.isArray(data)) {
                     for (const item of data) {
                         if (item['@type'] === 'JobPosting') {
                             jobs.push(parseJobPosting(item));
                         }
                     }
-                }
-                // Handle single job posting
-                else if (data['@type'] === 'JobPosting') {
+                } else if (data['@type'] === 'JobPosting') {
                     jobs.push(parseJobPosting(data));
-                }
-                // Handle @graph structure
-                else if (data['@graph']) {
+                } else if (data['@graph']) {
                     for (const item of data['@graph']) {
                         if (item['@type'] === 'JobPosting') {
                             jobs.push(parseJobPosting(item));
                         }
                     }
-                }
-                // Handle ItemList with job postings
-                else if (data['@type'] === 'ItemList' && data.itemListElement) {
+                } else if (data['@type'] === 'ItemList' && data.itemListElement) {
                     for (const listItem of data.itemListElement) {
                         const item = listItem.item || listItem;
                         if (item['@type'] === 'JobPosting') {
@@ -99,7 +99,7 @@ function parseJobPosting(jobData) {
 }
 
 /**
- * Extract embedded JSON data from page (like __NEXT_DATA__ or window.__DATA__)
+ * Extract embedded JSON data from page
  */
 async function extractJobsViaEmbeddedJSON(page) {
     log.info('Attempting to extract jobs via embedded JSON');
@@ -112,7 +112,6 @@ async function extractJobsViaEmbeddedJSON(page) {
         const jobs = [];
 
         for (const content of scripts) {
-            // Look for __NEXT_DATA__
             if (content.includes('__NEXT_DATA__')) {
                 try {
                     const match = content.match(/__NEXT_DATA__\s*=\s*({[\s\S]*?});?\s*<\/script>/);
@@ -131,7 +130,6 @@ async function extractJobsViaEmbeddedJSON(page) {
                 }
             }
 
-            // Look for window.__DATA__ or similar patterns
             const dataPatterns = [
                 /window\.__DATA__\s*=\s*({[\s\S]*?});/,
                 /window\.initialState\s*=\s*({[\s\S]*?});/,
@@ -188,7 +186,7 @@ function parseEmbeddedJob(job) {
 }
 
 /**
- * Extract job data via HTML parsing with Cheerio (Primary method for Upwork)
+ * Extract job data via HTML parsing with Cheerio
  */
 async function extractJobDataViaHTML(page) {
     log.info('Extracting job data via HTML parsing with Cheerio');
@@ -198,7 +196,7 @@ async function extractJobDataViaHTML(page) {
         const $ = cheerio.load(html);
         const jobs = [];
 
-        // Upwork job card selectors - multiple fallback patterns
+        // Upwork job card selectors
         const jobCardSelectors = [
             'article[data-test="JobTile"]',
             'article[data-ev-label="job_tile"]',
@@ -221,7 +219,6 @@ async function extractJobDataViaHTML(page) {
             }
         }
 
-        // If no specific selectors work, try broader patterns
         if (jobElements.length === 0) {
             log.info('Trying broader selectors for job cards');
             const broadSelectors = [
@@ -355,7 +352,7 @@ function extractUpworkJobFromElement($, $el) {
             }
         }
 
-        // Contract type (Fixed/Hourly)
+        // Contract type
         const contractSelectors = [
             '[data-test="payment-type"]',
             '[data-test="job-type"]',
@@ -453,7 +450,6 @@ function extractUpworkJobFromElement($, $el) {
             }
         }
 
-        // Only return if we have at least a title
         if (title) {
             return {
                 title,
@@ -462,7 +458,7 @@ function extractUpworkJobFromElement($, $el) {
                 experienceLevel,
                 contractType,
                 projectLength,
-                skills: skills.slice(0, 10), // Limit to 10 skills
+                skills: skills.slice(0, 10),
                 postedDate,
                 clientInfo,
                 url,
@@ -474,6 +470,38 @@ function extractUpworkJobFromElement($, $el) {
     } catch (err) {
         log.debug(`Error extracting job from element: ${err.message}`);
         return null;
+    }
+}
+
+/**
+ * Perform human-like interactions on page
+ */
+async function humanizeInteractions(page) {
+    try {
+        // Random mouse movements
+        const viewport = page.viewportSize();
+        if (viewport) {
+            const x = Math.floor(Math.random() * viewport.width * 0.8) + viewport.width * 0.1;
+            const y = Math.floor(Math.random() * viewport.height * 0.8) + viewport.height * 0.1;
+            await page.mouse.move(x, y, { steps: 10 });
+        }
+
+        // Random scroll
+        await page.evaluate(() => {
+            const scrollAmount = Math.floor(Math.random() * 300) + 100;
+            window.scrollBy({ top: scrollAmount, behavior: 'smooth' });
+        });
+
+        await page.waitForTimeout(randomDelay(500, 1500));
+
+        // Scroll back up a bit
+        await page.evaluate(() => {
+            const scrollAmount = Math.floor(Math.random() * 150) + 50;
+            window.scrollBy({ top: -scrollAmount, behavior: 'smooth' });
+        });
+
+    } catch (e) {
+        log.debug('Human interaction simulation failed - continuing');
     }
 }
 
@@ -506,12 +534,11 @@ async function saveDebugInfo(page) {
 try {
     const input = await Actor.getInput() || {};
 
-    log.info('Starting Upwork Jobs Scraper', {
+    log.info('Starting Upwork Jobs Scraper with Enhanced Stealth', {
         searchUrl: input.searchUrl,
         maxJobs: input.maxJobs
     });
 
-    // Validate input
     if (!input.searchUrl?.trim()) {
         throw new Error('Invalid input: "searchUrl" is required. Example: https://www.upwork.com/freelance-jobs/web-scraping/');
     }
@@ -524,56 +551,146 @@ try {
     const searchUrl = input.searchUrl.trim();
     log.info(`Search URL: ${searchUrl}`);
 
-    // Create proxy configuration
+    // Create proxy configuration - prefer residential proxies for Upwork
     const proxyConfiguration = await Actor.createProxyConfiguration(
-        input.proxyConfiguration || { useApifyProxy: true }
+        input.proxyConfiguration || {
+            useApifyProxy: true,
+            apifyProxyGroups: ['RESIDENTIAL']
+        }
     );
 
-    // Statistics tracking
     let totalJobsScraped = 0;
     let pagesProcessed = 0;
     let extractionMethod = 'None';
     const startTime = Date.now();
-
-    // Deduplication
     const seenJobUrls = new Set();
 
     // Get proxy URL for Camoufox
     const proxyUrl = await proxyConfiguration.newUrl();
+    log.info(`Using proxy: ${proxyUrl ? 'Yes (Residential)' : 'No'}`);
 
-    // Create Playwright crawler with Camoufox for Cloudflare bypass
+    // Create Playwright crawler with ENHANCED Camoufox for Cloudflare bypass
     const crawler = new PlaywrightCrawler({
         proxyConfiguration,
-        maxRequestsPerCrawl: 20,
-        maxConcurrency: 3,
-        navigationTimeoutSecs: 60,
-        requestHandlerTimeoutSecs: 180,
+        maxRequestsPerCrawl: 15,
+        maxConcurrency: 1, // Single concurrency for stealth
+        navigationTimeoutSecs: 90,
+        requestHandlerTimeoutSecs: 300,
+        maxRequestRetries: 5,
+
         launchContext: {
             launcher: firefox,
             launchOptions: await camoufoxLaunchOptions({
-                // Headless mode
-                headless: true,
+                // Use 'virtual' headless for better stealth on Linux
+                headless: 'virtual',
 
                 // Proxy configuration
                 proxy: proxyUrl,
 
-                // GeoIP spoofing - critical for Cloudflare bypass
+                // GeoIP spoofing - auto-set timezone/locale based on proxy IP
                 geoip: true,
 
-                // OS fingerprint - Windows is most common
-                os: 'windows',
+                // OS fingerprint - randomize between common OS
+                os: ['windows', 'macos'][Math.floor(Math.random() * 2)],
 
                 // Locale settings
                 locale: 'en-US',
 
-                // Screen constraints for realistic viewport
+                // Enable humanize mode for realistic cursor movements
+                humanize: 2.5,
+
+                // Block WebRTC to prevent IP leaks
+                block_webrtc: true,
+
+                // Block images for faster loading (can enable if needed)
+                block_images: false,
+
+                // Enable browser cache for more realistic behavior
+                enable_cache: true,
+
+                // Use bundled uBlock Origin addon for ad blocking
+                addons: ['ublock'],
+
+                // Screen constraints - use more common resolutions
                 screen: {
-                    minWidth: 1024,
+                    minWidth: 1280,
                     maxWidth: 1920,
-                    minHeight: 768,
+                    minHeight: 800,
                     maxHeight: 1080,
                 },
+
+                // Firefox preferences for enhanced stealth
+                firefoxPrefs: {
+                    // Disable telemetry
+                    'toolkit.telemetry.enabled': false,
+                    'datareporting.healthreport.uploadEnabled': false,
+
+                    // Disable WebRTC
+                    'media.peerconnection.enabled': false,
+                    'media.peerconnection.ice.default_address_only': true,
+
+                    // Privacy settings
+                    'privacy.trackingprotection.enabled': true,
+                    'privacy.resistFingerprinting': false, // Camoufox handles this
+                    'network.cookie.cookieBehavior': 4,
+
+                    // Disable beacons
+                    'beacon.enabled': false,
+
+                    // Performance
+                    'network.http.pipelining': true,
+                    'network.http.max-connections': 48,
+
+                    // JavaScript timing obfuscation
+                    'dom.event.highrestimestamp.enabled': true,
+
+                    // Disable safe browsing lookups
+                    'browser.safebrowsing.malware.enabled': false,
+                    'browser.safebrowsing.phishing.enabled': false,
+                },
             }),
+        },
+
+        // Pre-navigation hook
+        async preNavigationHooks({ page }) {
+            // Set extra headers that look natural
+            await page.setExtraHTTPHeaders({
+                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
+                'Accept-Language': 'en-US,en;q=0.9',
+                'Accept-Encoding': 'gzip, deflate, br',
+                'Cache-Control': 'max-age=0',
+                'Sec-Ch-Ua': '"Not A(Brand";v="99", "Google Chrome";v="121", "Chromium";v="121"',
+                'Sec-Ch-Ua-Mobile': '?0',
+                'Sec-Ch-Ua-Platform': '"Windows"',
+                'Sec-Fetch-Dest': 'document',
+                'Sec-Fetch-Mode': 'navigate',
+                'Sec-Fetch-Site': 'none',
+                'Sec-Fetch-User': '?1',
+                'Upgrade-Insecure-Requests': '1',
+            });
+
+            // Block unnecessary resources for faster loading
+            await page.route('**/*', (route) => {
+                const resourceType = route.request().resourceType();
+                const url = route.request().url();
+
+                // Block analytics, tracking, and heavy resources
+                if (
+                    resourceType === 'media' ||
+                    resourceType === 'font' ||
+                    url.includes('analytics') ||
+                    url.includes('tracking') ||
+                    url.includes('hotjar') ||
+                    url.includes('facebook') ||
+                    url.includes('google-analytics') ||
+                    url.includes('googletagmanager') ||
+                    url.includes('doubleclick')
+                ) {
+                    return route.abort();
+                }
+
+                return route.continue();
+            });
         },
 
         async requestHandler({ page, request }) {
@@ -581,67 +698,78 @@ try {
             log.info(`Processing page ${pagesProcessed}: ${request.url}`);
 
             try {
-                // Set realistic headers
-                await page.setExtraHTTPHeaders({
-                    'Accept-Language': 'en-US,en;q=0.9',
-                    'Accept-Encoding': 'gzip, deflate, br',
-                    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
-                    'Sec-Fetch-Dest': 'document',
-                    'Sec-Fetch-Mode': 'navigate',
-                    'Sec-Fetch-Site': 'none',
-                    'Sec-Fetch-User': '?1',
-                    'Upgrade-Insecure-Requests': '1',
-                });
+                // Add random delay before navigation for stealth
+                await page.waitForTimeout(randomDelay(2000, 4000));
 
-                // Navigate to page
+                // Navigate to page with longer timeout
                 await page.goto(request.url, {
                     waitUntil: 'domcontentloaded',
-                    timeout: 60000
+                    timeout: 90000
                 });
 
-                // Wait for network idle
-                await page.waitForLoadState('networkidle', { timeout: 15000 }).catch(() => { });
+                // Wait for network to settle
+                await page.waitForLoadState('networkidle', { timeout: 30000 }).catch(() => { });
 
-                // Handle Cloudflare challenge
+                // Perform human-like interactions
+                await humanizeInteractions(page);
+
+                // Handle Cloudflare challenge with extended retries
                 let retryCount = 0;
-                const maxRetries = 5;
+                const maxRetries = 8;
+                let cloudflareDetected = false;
 
                 while (retryCount < maxRetries) {
                     const title = await page.title();
-                    const bodyText = await page.evaluate(() => document.body?.innerText?.substring(0, 500) || '');
+                    const bodyText = await page.evaluate(() => document.body?.innerText?.substring(0, 1000) || '');
 
                     if (title.includes('Just a moment') ||
                         title.includes('Cloudflare') ||
+                        title.includes('Attention Required') ||
                         bodyText.includes('unusual traffic') ||
                         bodyText.includes('Checking your browser') ||
-                        bodyText.includes('Verify you are human')) {
+                        bodyText.includes('Verify you are human') ||
+                        bodyText.includes('Please wait') ||
+                        bodyText.includes('challenge-running')) {
 
+                        cloudflareDetected = true;
                         log.warning(`Cloudflare challenge detected (attempt ${retryCount + 1}/${maxRetries})`);
 
-                        // Wait for challenge to resolve
-                        await page.waitForTimeout(5000);
+                        // Wait longer for challenge to resolve
+                        await page.waitForTimeout(randomDelay(6000, 10000));
 
-                        // Try to click Turnstile checkbox if present
+                        // Perform human interactions
+                        await humanizeInteractions(page);
+
+                        // Try to click Turnstile checkbox
                         try {
                             const turnstileFrame = page.frameLocator('iframe[src*="challenges.cloudflare.com"]');
-                            const checkbox = turnstileFrame.locator('input[type="checkbox"], .cf-turnstile-wrapper');
+                            const checkbox = turnstileFrame.locator('input[type="checkbox"], .cf-turnstile-wrapper, [class*="checkbox"]');
 
                             if (await checkbox.count() > 0) {
                                 log.info('Found Turnstile checkbox, attempting click...');
-                                await checkbox.first().click({ timeout: 5000 });
-                                await page.waitForTimeout(5000);
+                                await checkbox.first().click({ timeout: 10000 });
+                                await page.waitForTimeout(randomDelay(5000, 8000));
                             }
                         } catch (clickErr) {
                             log.debug('No clickable Turnstile element found');
                         }
 
-                        await page.waitForTimeout(5000);
-                        await page.waitForLoadState('networkidle', { timeout: 20000 }).catch(() => { });
+                        // Also try clicking any visible verification buttons
+                        try {
+                            const verifyBtn = page.locator('button:has-text("Verify"), input[type="submit"], [data-action="verify"]');
+                            if (await verifyBtn.count() > 0) {
+                                await verifyBtn.first().click({ timeout: 5000 });
+                                await page.waitForTimeout(randomDelay(3000, 5000));
+                            }
+                        } catch (e) {
+                            // Ignore
+                        }
 
+                        await page.waitForLoadState('networkidle', { timeout: 30000 }).catch(() => { });
                         retryCount++;
                     } else {
-                        if (retryCount > 0) {
-                            log.info('Cloudflare challenge bypassed successfully!');
+                        if (cloudflareDetected) {
+                            log.info('✓ Cloudflare challenge bypassed successfully!');
                         }
                         break;
                     }
@@ -654,18 +782,24 @@ try {
                 }
 
                 // Additional wait for dynamic content
-                await page.waitForTimeout(3000);
+                await page.waitForTimeout(randomDelay(3000, 5000));
+
+                // Scroll down to trigger lazy loading
+                await page.evaluate(() => {
+                    window.scrollTo({ top: document.body.scrollHeight / 3, behavior: 'smooth' });
+                });
+                await page.waitForTimeout(2000);
 
                 let jobs = [];
 
-                // Strategy 1: Try JSON-LD extraction first
+                // Strategy 1: JSON-LD
                 jobs = await extractJobsViaJsonLD(page);
                 if (jobs.length > 0) {
                     extractionMethod = 'JSON-LD';
                     log.info(`✓ JSON-LD extraction successful: ${jobs.length} jobs`);
                 }
 
-                // Strategy 2: Try embedded JSON data
+                // Strategy 2: Embedded JSON
                 if (jobs.length === 0) {
                     jobs = await extractJobsViaEmbeddedJSON(page);
                     if (jobs.length > 0) {
@@ -674,7 +808,7 @@ try {
                     }
                 }
 
-                // Strategy 3: Fall back to HTML parsing
+                // Strategy 3: HTML parsing
                 if (jobs.length === 0) {
                     jobs = await extractJobDataViaHTML(page);
                     if (jobs.length > 0) {
@@ -683,19 +817,16 @@ try {
                     }
                 }
 
-                // Save debug info if no jobs found
                 if (jobs.length === 0) {
                     log.warning('No jobs found with any extraction method. Saving debug info...');
                     await saveDebugInfo(page);
                 }
 
                 if (jobs.length > 0) {
-                    // Limit jobs if needed
                     let jobsToSave = maxJobs > 0
                         ? jobs.slice(0, Math.max(0, maxJobs - totalJobsScraped))
                         : jobs;
 
-                    // Remove duplicates
                     const uniqueJobs = jobsToSave.filter(job => {
                         if (!job.url) return true;
                         if (seenJobUrls.has(job.url)) {
@@ -712,24 +843,21 @@ try {
 
                     jobsToSave = uniqueJobs;
 
-                    // Save jobs
                     if (jobsToSave.length > 0) {
                         await Actor.pushData(jobsToSave);
                         totalJobsScraped += jobsToSave.length;
                         log.info(`Saved ${jobsToSave.length} jobs. Total: ${totalJobsScraped}`);
                     }
 
-                    // Check if reached limit
                     if (maxJobs > 0 && totalJobsScraped >= maxJobs) {
                         log.info(`Reached maximum jobs limit: ${maxJobs}`);
                         return;
                     }
 
-                    // Pagination - check for next page
+                    // Pagination
                     const currentUrl = new URL(request.url);
                     const currentPage = parseInt(currentUrl.searchParams.get('page') || '1');
 
-                    // Look for pagination controls
                     const hasNextPage = await page.evaluate(() => {
                         const nextBtn = document.querySelector('[data-test="pagination-next"]') ||
                             document.querySelector('button[aria-label="Next"]') ||
@@ -744,6 +872,10 @@ try {
                         const nextPageUrl = currentUrl.toString();
 
                         log.info(`Found next page: ${nextPageUrl}`);
+
+                        // Add delay before next page
+                        await page.waitForTimeout(randomDelay(3000, 6000));
+
                         await crawler.addRequests([{
                             url: nextPageUrl,
                             uniqueKey: nextPageUrl
@@ -753,6 +885,7 @@ try {
 
             } catch (error) {
                 log.error(`Error processing page: ${error.message}`, { url: request.url });
+                await saveDebugInfo(page);
             }
         },
 
@@ -761,11 +894,9 @@ try {
         }
     });
 
-    // Start crawling
-    log.info('Starting crawler with Camoufox for Cloudflare bypass...');
+    log.info('Starting crawler with Enhanced Camoufox for Cloudflare bypass...');
     await crawler.run([searchUrl]);
 
-    // Calculate statistics
     const endTime = Date.now();
     const duration = Math.round((endTime - startTime) / 1000);
 
@@ -779,12 +910,12 @@ try {
 
     await Actor.setValue('statistics', statistics);
 
-    log.info('✓ Scraping completed successfully!', statistics);
+    log.info('✓ Scraping completed!', statistics);
 
     if (totalJobsScraped > 0) {
         log.info(`Successfully scraped ${totalJobsScraped} jobs in ${duration} seconds`);
     } else {
-        log.warning('No jobs were scraped. Upwork may be blocking requests. Check DEBUG_PAGE_HTML for details.');
+        log.warning('No jobs were scraped. Upwork may be blocking. Check DEBUG_PAGE_HTML for details.');
     }
 
 } catch (error) {
@@ -792,5 +923,4 @@ try {
     throw error;
 }
 
-// Exit successfully
 await Actor.exit();
