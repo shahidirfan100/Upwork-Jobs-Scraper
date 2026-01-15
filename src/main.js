@@ -548,12 +548,9 @@ try {
     const searchUrl = input.searchUrl.trim();
     log.info(`Search URL: ${searchUrl}`);
 
-    // Create proxy configuration - prefer residential proxies for Upwork
+    // Create proxy configuration
     const proxyConfiguration = await Actor.createProxyConfiguration(
-        input.proxyConfiguration || {
-            useApifyProxy: true,
-            apifyProxyGroups: ['RESIDENTIAL']
-        }
+        input.proxyConfiguration || { useApifyProxy: true }
     );
 
     let totalJobsScraped = 0;
@@ -562,9 +559,7 @@ try {
     const startTime = Date.now();
     const seenJobUrls = new Set();
 
-    // Get proxy URL for Camoufox
-    const proxyUrl = await proxyConfiguration.newUrl();
-    log.info(`Using proxy: ${proxyUrl ? 'Yes (Residential)' : 'No'}`);
+    log.info('Using Apify proxy for requests');
 
     // Create Playwright crawler with Camoufox for Cloudflare bypass
     // Following Apify's recommended template structure
@@ -578,14 +573,12 @@ try {
 
         launchContext: {
             launcher: firefox,
+            // Let crawler handle proxy via proxyConfiguration - don't pass to camoufox
             launchOptions: await camoufoxLaunchOptions({
                 // Headless mode
                 headless: true,
 
-                // Proxy configuration
-                proxy: proxyUrl,
-
-                // GeoIP spoofing - auto-set timezone/locale based on proxy IP
+                // GeoIP spoofing - auto-set based on IP
                 geoip: true,
 
                 // OS fingerprint
@@ -593,9 +586,6 @@ try {
 
                 // Locale settings
                 locale: 'en-US',
-
-                // Block WebRTC to prevent IP leaks
-                block_webrtc: true,
 
                 // Screen constraints
                 screen: {
