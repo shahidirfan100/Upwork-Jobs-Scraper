@@ -608,9 +608,6 @@ try {
                 // Enable browser cache for more realistic behavior
                 enable_cache: true,
 
-                // Use bundled uBlock Origin addon for ad blocking
-                addons: ['ublock'],
-
                 // Screen constraints - use more common resolutions
                 screen: {
                     minWidth: 1280,
